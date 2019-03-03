@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <context:component-scan base-package="com.test"/>
+
+    <context:property-placeholder location="classpath:db.properties"/>
+
+    <bean id="dataSource0" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close" abstract="true">
+        <property name="driverClassName" value="${datasource.driverClassName}"/>
+        <property name="username" value="${datasource.username}"/>
+        <property name="password" value="${datasource.password}"/>
+        <property name="initialSize" value="${datasource.initialSize}"/>
+        <property name="minIdle" value="${datasource.minIdle}"/>
+        <property name="maxActive" value="${datasource.maxActive}"/>
+        <property name="maxWait" value="${datasource.maxWait}"/>
+    </bean>
+
+    <bean id="dataSource1" parent="dataSource0">
+        <property name="url" value="${datasource.url1}"/>
+    </bean>
+
+    <bean id="dataSource2" parent="dataSource0">
+        <property name="url" value="${datasource.url2}"/>
+    </bean>
+
+    <bean id="dataSource" class="com.test.config.MyRoutingDataSource">
+        <property name="targetDataSources">
+            <map>
+                <entry key="ds1" value-ref="dataSource1"/>
+                <entry key="ds2" value-ref="dataSource2"/>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource" ref="dataSource1"/>
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager" order="2"/>
+
+    <aop:aspectj-autoproxy/>
+
+    <!--<tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED"/>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="query*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config>
+        <aop:pointcut id="pointcut" expression="execution(* com.test.service.UserService2.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pointcut" order="2"/>
+        <aop:aspect ref="myRoutingDataSourceAspect2" order="1">
+            <aop:around method="around" pointcut-ref="pointcut"/>
+        </aop:aspect>
+    </aop:config>
+
+    <bean id="myRoutingDataSourceAspect2" class="com.test.config.MyRoutingDataSourceAspect2"/>-->
+
+</beans>
